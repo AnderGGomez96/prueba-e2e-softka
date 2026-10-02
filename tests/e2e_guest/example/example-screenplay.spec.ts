@@ -1,8 +1,8 @@
 import { test, expect } from '../../../src/fixtures/base'
 import { exampleLocators } from '../../../src/locators/example.locators'
+import { Absent } from '../../../src/screenplay/questions/absent'
 import { CurrentUrl } from '../../../src/screenplay/questions/current-url'
 import { TextOf } from '../../../src/screenplay/questions/text-of'
-import { Ensure } from '../../../src/screenplay/tasks/ensure'
 import { OpenHomePage } from '../../../src/screenplay/tasks/open-home-page'
 
 test.describe('Ejemplo migrado a Screenplay', () => {
@@ -27,8 +27,8 @@ test.describe('Ejemplo migrado a Screenplay', () => {
     })
 
     await test.step('Y no aparece ningún banner de error', async () => {
-      await actor.attemptsTo(
-        Ensure.that(exampleLocators.errorBanner).isAbsent('No debe aparecer ningún banner de error'),
+      await actor.asks(
+        Absent.of(exampleLocators.errorBanner, 'No debe aparecer ningún banner de error'),
       )
     })
 

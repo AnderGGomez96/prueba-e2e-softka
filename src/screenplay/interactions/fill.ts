@@ -10,8 +10,8 @@ export class Fill implements Interaction {
     private readonly value: string,
   ) {}
 
-  static field(spec: LocatorSpec) {
-    return { with: (value: string) => new Fill(spec, value) }
+  static in(spec: LocatorSpec, value: string): Fill {
+    return new Fill(spec, value)
   }
 
   async performAs(actor: Actor): Promise<void> {
