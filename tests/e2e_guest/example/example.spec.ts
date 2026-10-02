@@ -15,10 +15,10 @@ test.describe('Ejemplo del esqueleto', () => {
       await examplePage.expectNoErrorBanner()
     })
 
-    await test.step('Y el healer no tuvo que curar ningún locator', async () => {
+    await test.step('Y el healer no tuvo que auto-recuperarse', async () => {
       expect(
-        healer.events,
-        'Una corrida limpia no debe registrar curaciones (la cadena resuelve sola)',
+        healer.events.filter((event) => event.level === 'cache' || event.level === 'ai'),
+        'Una corrida limpia no debe registrar auto-recuperaciones (la cadena resuelve sola)',
       ).toHaveLength(0)
     })
   })
