@@ -1,0 +1,20 @@
+{
+  "name": "prueba-e2e-softka",
+  "version": "1.0.0",
+  "description": "Esqueleto base de pruebas E2E de UI con Playwright + TypeScript y self-healing/autofix de locators",
+  "main": "index.js",
+  "scripts": {},
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "devDependencies": {
+    "@playwright/test": "^1.63.0",
+    "@types/node": "^26.6.2",
+    "dotenv": "^18.0.4",
+    "typescript": "^7.0.2"
+  },
+  "dependencies": {
+    "diff": "^9.0.0"
+  }
+}

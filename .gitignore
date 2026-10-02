@@ -1,0 +1,26 @@
+
+# Entorno opencode (no commiteable: base local de trabajo)
+.opencode/
+AGENTS.md
+AGENTS.md.base
+
+# Secretos y configuracion local
+.env
+.env.*
+!.env.example
+
+# Playwright
+node_modules/
+/test-results/
+/playwright-report/
+/blob-report/
+/playwright/.cache/
+/playwright/.auth/
+tests/playwright/.auth/
+
+# Artefactos generados por el sistema de healing
+.healing/
+/patches/
+
+# Evidencia local del registro de cambios (C-###)
+.local/
