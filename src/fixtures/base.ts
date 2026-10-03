@@ -3,6 +3,7 @@ import { Healer } from '../healing/healer'
 import { loadHealingConfig, type HealingConfig } from '../healing/config'
 import type { Actor } from '../screenplay/actor'
 import { cast } from '../screenplay/cast'
+import { createActorSession } from '../screenplay/session'
 
 type HealingFixtures = {
   healingConfig: HealingConfig
@@ -17,9 +18,17 @@ type ScreenplayFixtures = {
   actor: Actor
 }
 
-const testDelayMs = Number(process.env.E2E_TEST_DELAY_MS ?? 0)
+type RoleFixtures = {
+  cliente: Actor
+  administrador: Actor
+}
 
-export const test = base.extend<HealingFixtures & ThrottleFixtures & ScreenplayFixtures>({
+const testDelayMs = Number(process.env.E2E_TEST_DELAY_MS ?? 0)
+const actorName = process.env.E2E_ACTOR_NAME ?? 'Cliente'
+
+export const test = base.extend<
+  HealingFixtures & ThrottleFixtures & ScreenplayFixtures & RoleFixtures
+>({
 
   healingConfig: [
     async ({}, use) => { await use(loadHealingConfig()) },
@@ -39,8 +48,32 @@ export const test = base.extend<HealingFixtures & ThrottleFixtures & ScreenplayF
     }
   }, { auto: true }],
 
-  actor: async ({ page, healer }, use) => {
-    await use(cast(page, healer, 'Cliente'))
+  actor: async ({ page, healer }, use, testInfo) => {
+    const actor = cast(page, healer, actorName)
+    testInfo.annotations.push({ type: 'actor', description: actor.name })
+    await use(actor)
+  },
+
+  cliente: async ({ browser, healingConfig }, use, testInfo) => {
+    const session = await createActorSession({
+      browser,
+      healingConfig,
+      testInfo,
+      name: 'Cliente',
+    })
+    await use(session.actor)
+    await session.close()
+  },
+
+  administrador: async ({ browser, healingConfig }, use, testInfo) => {
+    const session = await createActorSession({
+      browser,
+      healingConfig,
+      testInfo,
+      name: 'Administrador',
+    })
+    await use(session.actor)
+    await session.close()
   },
 })
 
