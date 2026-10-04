@@ -1,5 +1,7 @@
 # Prueba E2E — Flujo de compra en OpenCart
 
+Las conclusiones de la prueba están en [conclusiones.md](conclusiones.md).
+
 ## Reto técnico
 
 Prueba funcional automatizada (E2E) del flujo de compra en http://opencart.abstracta.us/ que cubre:
