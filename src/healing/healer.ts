@@ -21,7 +21,7 @@ import { candidateToLocator, describeCandidate } from './locator-factory'
 import { proposeLocator } from './ai-resolver'
 import { proposeLocatorWithSystemOne } from './systemone-resolver'
 import type { PageSnapshot } from './snapshot'
-import type { AiProposal, HealingAttempt, HealingEvent, LocatorSpec } from './types'
+import type { AiProposal, HealingAttempt, HealingEvent, LocatorSpec, SelectOption } from './types'
 
 /** Opciones de construcción del {@link Healer}. */
 export interface HealerOptions {
@@ -89,6 +89,34 @@ export class Healer {
   async fill(spec: LocatorSpec, value: string, options?: { timeout?: number }): Promise<void> {
     const locator = await this.resolve(spec)
     await locator.fill(value, options)
+  }
+
+  /**
+   * Resuelve el locator y selecciona una opción del `<select>`.
+   *
+   * @param spec - Locator del `<select>` a completar.
+   * @param option - Opción a seleccionar (texto/label, value o índice).
+   * @param options - Timeout opcional para la acción de Playwright.
+   */
+  async select(
+    spec: LocatorSpec,
+    option: SelectOption,
+    options?: { timeout?: number },
+  ): Promise<void> {
+    const locator = await this.resolve(spec)
+    await locator.selectOption(option, options)
+  }
+
+  /**
+   * Resuelve el locator y marca el radio/checkbox (idempotente: si ya está
+   * marcado no lo destilda, a diferencia de un click).
+   *
+   * @param spec - Locator del radio o checkbox.
+   * @param options - Timeout opcional para la acción de Playwright.
+   */
+  async check(spec: LocatorSpec, options?: { timeout?: number }): Promise<void> {
+    const locator = await this.resolve(spec)
+    await locator.check(options)
   }
 
   /**
@@ -168,7 +196,12 @@ export class Healer {
     const started = Date.now()
     const attempts: HealingAttempt[] = []
     const waitState: WaitState =
-      spec.action === 'click' || spec.action === 'fill' ? 'visible' : 'attached'
+      spec.action === 'click' ||
+      spec.action === 'fill' ||
+      spec.action === 'select' ||
+      spec.action === 'check'
+        ? 'visible'
+        : 'attached'
 
     for (let index = 0; index < spec.candidates.length; index++) {
       const candidate = spec.candidates[index]

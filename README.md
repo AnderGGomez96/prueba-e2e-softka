@@ -1,76 +1,44 @@
-# prueba-e2e-softka
+# Prueba E2E — Flujo de compra en OpenCart
 
-Esqueleto base de pruebas E2E de UI con Playwright + TypeScript y
-**self-healing/autofix de locators** (escalera: cadena de candidatos →
-caché → IA). Es el runtime del framework, sin suite de producto: trae un
-test Screenplay, una tarea y un locator genéricos de ejemplo listos para
-adaptar al sitio destino (`E2E_BASE_URL`).
+## Reto técnico
 
-## Stack
+Prueba funcional automatizada (E2E) del flujo de compra en http://opencart.abstracta.us/ que cubre:
 
-- Node 22 / npm 11
-- TypeScript (`strict`, `noEmit`, CommonJS)
-- `@playwright/test`
-- `dotenv` (carga `.env` desde `playwright.config.ts`)
-- `diff` (generación de parches del healing)
+1. Agregar dos productos al carrito.
+2. Visualizar el carrito.
+3. Completar el checkout como invitado (Guest Checkout).
+4. Finalizar la compra hasta la confirmación "Your order has been placed!".
 
-## Estructura
+Implementada con Playwright + TypeScript, patrón Screenplay y self-healing de locators.
 
-```text
-src/
-  healing/      core self-healing + autofix (no modificar salvo R1)
-  locators/     locators como datos (`LocatorSpec` + `@heal-target`) — el "Screen"
-  screenplay/   runtime Screenplay: actor, ability (`Page` + `Healer`), interactions, tasks, questions
-  components/   patrón opcional de componente (recibe solo `Healer`)
-  fixtures/     único export de `test` (healer + testDelay + actor)
-tests/
-  e2e_guest/    specs sin sesión (proyecto chromium-guest)
-```
+## Instalación y uso
 
-## Cómo correr
+Requisitos: Node.js 22 o superior y npm.
 
 ```bash
 npm install
-cp .env.example .env   # completar E2E_BASE_URL y, si aplica, HEAL_* (nunca commitear)
+copy .env.example .env          # Windows (Linux/macOS: cp .env.example .env)
 npx playwright install --with-deps
-npx playwright test --project=chromium-guest
-npx playwright show-report
-npx tsc --noEmit       # 0 errores
+npx playwright test
 ```
 
-Sin API key el nivel IA queda deshabilitado y el framework sigue operativo
-con cadena + caché (escenario de CI). `HEAL_APPLY=1` solo en revisiones
-explícitas del diff.
+La suite corre en Chromium, Firefox y WebKit (proyectos `*-guest`) contra `E2E_BASE_URL`, definido en `.env`.
 
-## Self-healing
+## Reportes y grabaciones
 
-Cada `LocatorSpec` declara una cadena de candidatos. Si ninguno resuelve,
-`Healer` consulta la caché y, como último nivel, a un motor de IA
-(`HEAL_ENGINE=chat|systemone`). Cada cura:
+La ejecución genera reporte HTML, video y traza por prueba (activados por defecto):
 
-- anota el test y escribe `.healing/healing-report-*.json`,
-- guarda evento y snapshot en `.healing/`,
-- propone un parche en `patches/` (aplicable con `HEAL_APPLY=1`).
+- Reporte HTML: `npx playwright show-report` (abre `playwright-report/`; cada prueba incluye su video y su traza adjuntos).
+- Videos: `test-results/**/videos/*.webm`.
+- Trazas: `npx playwright show-trace test-results/**/trace.zip`.
 
-Reglas del esqueleto (cadena, `@heal-target`, interactions/tasks/questions
-sin `page.locator(`, un único export de `test`, web-first, gobernanza
-local/ci): ver la guía de migración del esqueleto base (§3–§6).
+## Self-healing (opcional)
 
-## Patrón Screenplay
+El healer resuelve cada locator con una cadena de candidatos. Si todos fallan, consulta la caché y, como último recurso, un motor de IA. Sin API key configurada, el nivel de IA queda deshabilitado y la suite usa solo la cadena.
 
-El runtime vive en `src/screenplay/` y usa el healer por debajo: el actor
-recibe la habilidad `BrowseTheWeb` (`Page` + `Healer`), ejecuta tareas
-(`actor.attemptsTo`) y responde preguntas o verificaciones (`actor.asks`).
-El fixture `actor` sale de `src/fixtures/base.ts`. Guía local:
-`.opencode/skills/screenplay-playwright/` (no versionada).
+Para activarlo, completa el motor y su credencial en `.env`:
 
-## Adaptación al sitio destino
+- `HEAL_ENGINE=chat` con `HEAL_LLM_API_KEY`, o
+- `HEAL_ENGINE=systemone` con `HEAL_JEV_API_KEY`.
 
-1. Fijar `E2E_BASE_URL` en `.env` (nunca fija en `playwright.config.ts`).
-2. Si el sitio usa otra convención de test-id distinta de `data-qa`,
-   ajustar `SYSTEM_PROMPT` (`ai-resolver.ts`), `locatorForElement`
-   (`systemone-resolver.ts`) y/o `testIdAttribute` en la config.
-3. Reemplazar los valores `<...>` del ejemplo (`example.locators.ts`,
-   `example-screenplay.spec.ts`) por los reales del sitio.
-4. Si el sitio tiene login, añadir proyecto `setup` + `chromium-logged`
-   con `storageState`; si no, no migrar nada de auth.
+Para verlo en acción: cambia a propósito un candidato en `src/locators/home.locators.ts`, corre `npx playwright test` y revisa el reporte. La curación queda anotada en el test, el evento en `.healing/` y un parche en `patches/`.

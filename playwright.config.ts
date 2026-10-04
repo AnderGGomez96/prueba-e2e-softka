@@ -14,25 +14,28 @@ import path from 'path';
 dotenv.config({ path: path.resolve(__dirname, '.env') });
 
 /**
- * Workers del runner: 1 en CI, automático en local.
- * `E2E_WORKERS` lo fija (p. ej. `1` cuando el sitio externo está bajo carga).
+ * Workers del runner: 1 por defecto (sitio externo compartido).
+ * `E2E_WORKERS` lo fija (p. ej. `3` para forzar paralelismo).
  */
 function envWorkers(): number | undefined {
   const parsed = Number(process.env.E2E_WORKERS)
   if (Number.isFinite(parsed) && parsed > 0) return parsed
-  return process.env.CI ? 1 : undefined
+  return 1
 }
 
 /**
  * See https://playwright.dev/docs/test-configuration.
  *
  * Plantilla del esqueleto: la `baseURL` sale del entorno (`E2E_BASE_URL`,
- * ver `.env.example`). Sin sesión en el destino: solo `chromium-guest`.
+ * ver `.env.example`). Sin sesión en el destino: proyectos `*-guest` en
+ * Chromium, Firefox y WebKit.
  * Si el sitio destino tiene login, añadir `setup` + `chromium-logged`
  * con `storageState` (ver R13 de la guía de migración).
  */
 export default defineConfig({
   testDir: './tests',
+  /* El sitio destino es externo: margen amplio por prueba. */
+  timeout: 90_000,
   /* Run tests in files in parallel */
   fullyParallel: true,
   /* Fail the build on CI if you accidentally left test.only in the source code. */
@@ -42,13 +45,14 @@ export default defineConfig({
   /* Workers: 1 en CI, automático en local; E2E_WORKERS lo fija. */
   workers: envWorkers(),
   /* Reporter to use. See https://playwright.dev/docs/test-reporters */
-  //reporter: 'html',
+  reporter: [['list'], ['html', { open: 'never' }]],
   /* Shared settings for all the projects below. See https://playwright.dev/docs/api/class-testoptions. */
   use: {
     /* Base URL to use in actions like `await page.goto('/')`. Por entorno (R2). */
     baseURL: process.env.E2E_BASE_URL,
-    /* Collect trace when retrying the failed test. See https://playwright.dev/docs/trace-viewer */
-    trace: 'on-first-retry',
+    /* Video y traza activados por defecto como evidencia de la ejecución. */
+    video: 'on',
+    trace: 'on',
     // Si el sitio usa `data-qa` como atributo de test-id en lugar de
     // `data-testid`, descomentar la línea siguiente (ver §6 de la guía):
     // testIdAttribute: 'data-qa',
@@ -57,5 +61,7 @@ export default defineConfig({
   /* Configure projects for major browsers */
   projects: [
     { name: 'chromium-guest', use: { ...devices['Desktop Chrome'] } },
+    { name: 'firefox-guest', use: { ...devices['Desktop Firefox'] } },
+    { name: 'webkit-guest', use: { ...devices['Desktop Safari'] } },
   ],
 });

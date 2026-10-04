@@ -30,6 +30,7 @@ export async function createActorSession(options: {
 }): Promise<ActorSession> {
   const context = await options.browser.newContext({
     storageState: options.storageState,
+    recordVideo: { dir: options.testInfo.outputPath('videos') },
   })
   const page = await context.newPage()
   const healer = new Healer(page, {
@@ -49,7 +50,14 @@ export async function createActorSession(options: {
       if (closed) return
       closed = true
       await healer.flush()
+      const video = page.video()
       await context.close()
+      if (video) {
+        await options.testInfo.attach(`video-${options.name}.webm`, {
+          path: await video.path(),
+          contentType: 'video/webm',
+        })
+      }
     },
   }
 }

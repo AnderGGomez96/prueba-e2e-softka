@@ -20,7 +20,13 @@ export type LocatorStrategy =
   | 'title'
 
 /** Acción semántica que describe qué se hará con el elemento. */
-export type LocatorAction = 'click' | 'fill' | 'read' | 'assert'
+export type LocatorAction = 'click' | 'fill' | 'select' | 'check' | 'read' | 'assert'
+
+/**
+ * Opción a seleccionar en un `<select>`: texto (matchea value o label),
+ * o la terna label/value/index de Playwright.
+ */
+export type SelectOption = string | { label?: string; value?: string; index?: number }
 
 /**
  * Candidato concreto dentro de la cadena de fallbacks de un locator.

@@ -6,7 +6,7 @@
  *
  * ```ts
  * import type { Healer } from '../healing'
- * import { exampleLocators } from '../locators/example.locators'
+ * import { homeLocators } from '../locators/home.locators'
  *
  * export class ExampleComponent {
  *   constructor(private readonly healer: Healer) {}

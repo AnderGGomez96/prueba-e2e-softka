@@ -1,0 +1,18 @@
+{
+  "personal": {
+    "firstName": "John",
+    "lastName": "Doe",
+    "email": "john.doe@example.com",
+    "telephone": "+44 7700 900123"
+  },
+  "address": {
+    "company": "Acme Testing Ltd",
+    "address1": "221B Baker Street",
+    "address2": "Flat 2",
+    "city": "London",
+    "postCode": "NW1 6XE",
+    "country": "United Kingdom",
+    "regionState": "Greater London"
+  },
+  "comment":"Tener cuidado"
+}

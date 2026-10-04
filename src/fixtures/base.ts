@@ -19,12 +19,12 @@ type ScreenplayFixtures = {
 }
 
 type RoleFixtures = {
+  invitado: Actor
   cliente: Actor
-  administrador: Actor
 }
 
 const testDelayMs = Number(process.env.E2E_TEST_DELAY_MS ?? 0)
-const actorName = process.env.E2E_ACTOR_NAME ?? 'Cliente'
+const actorName = process.env.E2E_ACTOR_NAME ?? 'invitado'
 
 export const test = base.extend<
   HealingFixtures & ThrottleFixtures & ScreenplayFixtures & RoleFixtures
@@ -65,12 +65,12 @@ export const test = base.extend<
     await session.close()
   },
 
-  administrador: async ({ browser, healingConfig }, use, testInfo) => {
+  invitado: async ({ browser, healingConfig }, use, testInfo) => {
     const session = await createActorSession({
       browser,
       healingConfig,
       testInfo,
-      name: 'Administrador',
+      name: 'Invitado',
     })
     await use(session.actor)
     await session.close()

@@ -5,9 +5,6 @@
  * artefactos y credenciales. {@link loadHealingConfig} es el único punto de
  * lectura; el resto del sistema solo consume {@link HealingConfig}.
  */
-import fs from 'node:fs'
-import os from 'node:os'
-import path from 'node:path'
 import { randomUUID } from 'node:crypto'
 import type { SnapshotMode } from './snapshot'
 
@@ -23,7 +20,7 @@ export interface LlmConfig {
   enabled: boolean
   /** URL base del servicio de chat. */
   baseURL: string
-  /** Credencial de acceso; se resuelve desde env o `auth.json` de opencode. */
+  /** Credencial de acceso; se resuelve solo desde variables de entorno. */
   apiKey?: string
   /** Identificador del modelo. */
   model: string
@@ -98,33 +95,13 @@ function readFlag(env: NodeJS.ProcessEnv, name: string, fallback: boolean): bool
   return raw === '1' || raw.toLowerCase() === 'true'
 }
 
-function readOpenCodeGoKey(): string | undefined {
-  const candidates = [
-    process.env.OPENCODE_AUTH_FILE,
-    path.join(os.homedir(), '.local', 'share', 'opencode', 'auth.json'),
-    process.env.APPDATA ? path.join(process.env.APPDATA, 'opencode', 'auth.json') : undefined,
-  ].filter((value): value is string => Boolean(value))
-
-  for (const file of candidates) {
-    try {
-      if (!fs.existsSync(file)) continue
-      const parsed = JSON.parse(fs.readFileSync(file, 'utf8')) as Record<string, { key?: string }>
-      const entry = parsed['opencode-go']
-      if (entry?.key) return entry.key
-    } catch {
-      continue
-    }
-  }
-  return undefined
-}
-
 /**
  * Construye la configuración a partir de variables de entorno.
  *
  * El modo se deduce de `HEAL_MODE` o, en su defecto, de la variable `CI`.
  * Los umbrales tienen valores por defecto distintos según el modo. La
- * credencial de chat puede venir de `HEAL_LLM_API_KEY`, `OPENCODE_GO_API_KEY`,
- * `OPENCODE_API_KEY` o del `auth.json` de opencode.
+ * credencial de chat puede venir de `HEAL_LLM_API_KEY`, `OPENCODE_GO_API_KEY`
+ * o `OPENCODE_API_KEY`.
  *
  * @param env - Entorno a leer; por defecto `process.env`.
  * @returns Configuración lista para {@link Healer}.
@@ -140,7 +117,7 @@ export function loadHealingConfig(env: NodeJS.ProcessEnv = process.env): Healing
   const engine: HealingEngine = env.HEAL_ENGINE === 'systemone' ? 'systemone' : 'chat'
 
   const apiKey =
-    env.HEAL_LLM_API_KEY || env.OPENCODE_GO_API_KEY || env.OPENCODE_API_KEY || readOpenCodeGoKey()
+    env.HEAL_LLM_API_KEY || env.OPENCODE_GO_API_KEY || env.OPENCODE_API_KEY
   const jevKey = env.HEAL_JEV_API_KEY || env.HEAL_SYSTEMONE_API_KEY || env.TYPESAFE_API_KEY
   const userAgent = 'auto-fix-healer-poc/0.1 (Playwright)'
 
@@ -150,7 +127,7 @@ export function loadHealingConfig(env: NodeJS.ProcessEnv = process.env): Healing
     snapshotMode: env.HEAL_SNAPSHOT === 'dom' ? 'dom' : 'hybrid',
     minConfidence: readNumber(env, 'HEAL_MIN_CONFIDENCE', mode === 'ci' ? 0.85 : 0.5),
     maxHealsPerTest: readNumber(env, 'HEAL_MAX_PER_TEST', mode === 'ci' ? 2 : 3),
-    candidateTimeoutMs: readNumber(env, 'HEAL_CANDIDATE_TIMEOUT_MS', 2500),
+    candidateTimeoutMs: readNumber(env, 'HEAL_CANDIDATE_TIMEOUT_MS', 10_000),
     artifactsDir: env.HEAL_ARTIFACTS_DIR || '.healing',
     patchesDir: env.HEAL_PATCHES_DIR || 'patches',
     writePatches: readFlag(env, 'HEAL_WRITE_PATCHES', true),
